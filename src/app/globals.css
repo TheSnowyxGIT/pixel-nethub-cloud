@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background-100: #fff;
+    --background-200: #fafafa;
+    --bs-gray-1000: #171717;
+    --bs-gray-900: #666666;
+    --bs-gray-alpha-400: #00000014;
+    --active: #0050d7;
+  }
+
+  .dark {
+    --background-100: #0a0a0a;
+    --background-200: #000;
+    --bs-gray-1000: #ededed;
+    --bs-gray-900: #a1a1a1;
+    --bs-gray-alpha-400: #ffffff24;
+
+    --active: #0050d7;
+  }
+}
+
+body {
+  background: var(--background-200);
+  color: var(--bs-gray-1000);
+}
+
+html {
+  scroll-behavior: smooth;
+}
