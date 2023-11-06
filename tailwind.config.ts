@@ -11,11 +11,12 @@ const config: Config = {
     extend: {
       colors: {
         "background-100": "var(--background-100)",
+        "background-150": "var(--background-150)",
         "background-200": "var(--background-200)",
         "bs-gray-900": "var(--bs-gray-900)",
         "bs-gray-1000": "var(--bs-gray-1000)",
         "bs-gray-alpha-400": "var(--bs-gray-alpha-400)",
-        active: "var(--active)",
+        active: "rgb(var(--active))",
       },
     },
   },

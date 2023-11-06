@@ -1,5 +1,5 @@
 "use client";
-import { Font } from "@/models/Font";
+import { Font, FontSettings } from "@/models/Font";
 import { CircularProgress, MenuItem, Select } from "@mui/material";
 import React from "react";
 import { Component } from "react";
@@ -8,9 +8,13 @@ import Screen from "@/components/p5/screen";
 import { Color, PixelMatrix } from "pixels-matrix";
 import { infiniteScroll } from "matrix-text-scroll";
 import { getFont } from "text2matrix";
+import C_BoxHeader from "../basics/C_BoxHeader";
+import TextField from "@mui/material/TextField";
+import C_Select from "../mui/C_Select";
 
 export type FontPreviewProps = {
-  font: Font | null;
+  fontHash: string | null;
+  fontSettings: FontSettings;
 };
 
 type FontPreviewState = {
@@ -29,6 +33,7 @@ export default class FontPreview extends Component<
     numbers: "0123456789",
   };
   private screenRef: React.RefObject<Screen>;
+  private infScroll?: ReturnType<typeof infiniteScroll>;
 
   constructor(props: FontPreviewProps) {
     super(props);
@@ -55,42 +60,37 @@ export default class FontPreview extends Component<
     }, this.timeout);
   }
 
-  componentDidUpdate(
+  async componentDidUpdate(
     prevProps: Readonly<FontPreviewProps>,
     prevState: Readonly<FontPreviewState>
-  ): void {
-    if (!prevState.size && this.state.size) {
-      // start the screen
-      this.restart(this.currentSettings);
-    }
-    if (this.state.size && prevState.textType !== this.state.textType) {
-      // restart the screen
-      this.restart(this.currentSettings);
-    }
+  ): Promise<void> {
+    await this.restart();
   }
 
-  private infScroll: any;
-  private currentSettings = { fontSize: 5, letterSpacing: 0 };
-  public restart(settings: { fontSize: number; letterSpacing: number }) {
-    this.currentSettings = settings;
-    if (!this.state.size) {
+  private isClosing = false;
+  public async restart() {
+    if (this.infScroll && !this.isClosing) {
+      this.infScroll.requestStop();
+      this.isClosing = true;
+      await this.infScroll.waitEnd();
+      this.infScroll = undefined;
+      this.isClosing = false;
+    } else if (this.isClosing) {
       return;
     }
-    if (!this.infScroll) {
-      this.startScreen(settings);
-      return;
-    }
-    this.infScroll.requestStop();
-    this.infScroll.waitEnd().then(() => {
-      this.startScreen(settings);
-    });
+
+    this.startScreen();
   }
 
-  private startScreen(settings: { fontSize: number; letterSpacing: number }) {
+  private startScreen() {
+    if (!this.props.fontHash || !this.state.size || this.infScroll) {
+      return;
+    }
     const pixelMatrix = new PixelMatrix(
-      this.state.size!.width,
-      this.state.size!.height
+      this.state.size.width,
+      this.state.size.height
     );
+    console.log("startScreen");
     this.infScroll = infiniteScroll(
       this.texts[this.state.textType],
       (matrix) => {
@@ -98,40 +98,38 @@ export default class FontPreview extends Component<
         this.screenRef.current?.applyPm(pixelMatrix);
       },
       {
-        font: getFont(this.props.font!.hash),
-        fontSize: settings.fontSize,
-        letterSpacing: settings.letterSpacing,
+        font: getFont(this.props.fontHash),
+        fontSize: this.props.fontSettings.fontSize,
+        letterSpacing: this.props.fontSettings.letterSpacing,
         speed_x: -12,
-        box: this.state.size!,
+        box: this.state.size,
       }
     );
   }
 
   render() {
     return (
-      <div className="mt-6 p-4 bg-bs-gray-1000 border-[1px] border-bs-gray-alpha-400 rounded-md shadow-sm">
-        <div className="pb-4">
+      // <div className="mt-6 p-4 bg-bs-gray-1000 border-[1px] border-bs-gray-alpha-400 rounded-md shadow-sm">
+      <C_BoxHeader title="Preview">
+        <div>
           <div className="pb-2 flex justify-between">
-            <h3 className="text-lg font-medium text-background-200">Preview</h3>
-            <Select
-              labelId="Text"
+            <C_Select
               value={this.state.textType}
-              label="Text"
+              size="small"
+              select
+              label="Text type"
               onChange={(e) => {
                 this.setState({ textType: e.target.value as string });
               }}
-            >
-              <MenuItem value={"lowercase"}>Lowercase</MenuItem>
-              <MenuItem value={"uppercase"}>Uppercase</MenuItem>
-              <MenuItem value={"numbers"}>Numbers</MenuItem>
-            </Select>
+              choices={[
+                { value: "lowercase", label: "Lowercase" },
+                { value: "uppercase", label: "Uppercase" },
+                { value: "numbers", label: "Numbers" },
+              ]}
+            />
           </div>
-          <p className="text-gray-300 text-sm">
-            Preview of the font and settings. This is how the font will look on
-            the screen.
-          </p>
         </div>
-        {this.props.font && this.state.size ? (
+        {this.props.fontHash && this.state.size ? (
           <div className="w-full">
             <Screen
               ref={this.screenRef}
@@ -142,11 +140,16 @@ export default class FontPreview extends Component<
             />
           </div>
         ) : (
-          <div className="w-full min-h-[100px] flex items-center justify-center">
+          <div className="w-full min-h-[100px] flex gap-4 items-center justify-center">
             <CircularProgress />
+            {this.state.size ? (
+              <span>Waiting for font</span>
+            ) : (
+              <span>Fetching Screen Size...</span>
+            )}
           </div>
         )}
-      </div>
+      </C_BoxHeader>
     );
   }
 }

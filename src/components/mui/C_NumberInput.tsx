@@ -1,142 +1,108 @@
-import React from "react";
+import * as React from "react";
 import {
-  Unstable_NumberInput as NumberInput,
+  Unstable_NumberInput as BaseNumberInput,
   NumberInputProps,
-  numberInputClasses,
+  NumberInputOwnerState,
 } from "@mui/base/Unstable_NumberInput";
-import { styled } from "@mui/system";
+import clsx from "clsx";
+import { InputLabel } from "@mui/material";
 
-const C_NumberInput = React.forwardRef(function CustomNumberInput(
+export type C_NumberInputProps = NumberInputProps & {
+  className?: string;
+  label: string;
+};
+
+const C_NumberInput: React.FC<C_NumberInputProps> = ({
+  className,
+  label,
+  ...props
+}) => {
+  return (
+    <div className={`${className ?? ""}`}>
+      <InputLabel>{label}</InputLabel>
+      <NumberInput
+        aria-label={label}
+        placeholder="Type a number…"
+        value={props.value}
+        onChange={props.onChange}
+        {...props}
+      />
+    </div>
+  );
+};
+
+export default C_NumberInput;
+
+const resolveSlotProps = (fn: any, args: any) =>
+  typeof fn === "function" ? fn(args) : fn;
+
+const NumberInput = React.forwardRef(function NumberInput(
   props: NumberInputProps,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   return (
-    <NumberInput
-      slots={{
-        root: StyledInputRoot,
-        input: StyledInputElement,
-        incrementButton: StyledButton,
-        decrementButton: StyledButton,
-      }}
-      slotProps={{
-        incrementButton: {
-          children: "▴",
-        },
-        decrementButton: {
-          children: "▾",
-        },
-      }}
+    <BaseNumberInput
       {...props}
       ref={ref}
+      slotProps={{
+        root: (ownerState: NumberInputOwnerState) => {
+          const resolvedSlotProps = resolveSlotProps(
+            props.slotProps?.root,
+            ownerState
+          );
+          return {
+            ...resolvedSlotProps,
+            className: clsx(
+              "grid grid-cols-[1fr_19px] grid-rows-2 overflow-hidden font-sans rounded-lg text-slate-900 dark:text-slate-300 border border-solid  bg-white dark:bg-slate-900  hover:border-violet-400 dark:hover:border-violet-400 focus-visible:outline-0 ",
+              ownerState.focused
+                ? "border-violet-400 dark:border-violet-400 shadow-lg shadow-outline-purple dark:shadow-outline-purple"
+                : "border-slate-300 dark:border-slate-600 shadow-md shadow-slate-100 dark:shadow-slate-900",
+              resolvedSlotProps?.className
+            ),
+          };
+        },
+        input: (ownerState: NumberInputOwnerState) => {
+          const resolvedSlotProps = resolveSlotProps(
+            props.slotProps?.input,
+            ownerState
+          );
+          return {
+            ...resolvedSlotProps,
+            className: clsx(
+              "col-start-1 col-end-2 row-start-1 row-end-3 text-sm font-sans leading-normal text-slate-900 bg-inherit border-0 rounded-[inherit] dark:text-slate-300 px-3 py-2 outline-0 focus-visible:outline-0 focus-visible:outline-none",
+              resolvedSlotProps?.className
+            ),
+          };
+        },
+        incrementButton: (ownerState: NumberInputOwnerState) => {
+          const resolvedSlotProps = resolveSlotProps(
+            props.slotProps?.incrementButton,
+            ownerState
+          );
+          return {
+            ...resolvedSlotProps,
+            children: "▴",
+            className: clsx(
+              "font-[system-ui] flex flex-row flex-nowrap justify-center items-center appearance-none p-0 w-[19px] h-[19px] text-sm box-border leading-[1.2] border-0 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300 transition-all duration-[120ms] hover:cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 col-start-2 col-end-3 row-start-1 row-end-2",
+              resolvedSlotProps?.className
+            ),
+          };
+        },
+        decrementButton: (ownerState: NumberInputOwnerState) => {
+          const resolvedSlotProps = resolveSlotProps(
+            props.slotProps?.decrementButton,
+            ownerState
+          );
+          return {
+            ...resolvedSlotProps,
+            children: "▾",
+            className: clsx(
+              "font-[system-ui] flex flex-row flex-nowrap justify-center items-center appearance-none p-0 w-[19px] h-[19px] text-sm box-border leading-[1.2] border-0 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300 transition-all duration-[120ms] hover:cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 col-start-2 col-end-3 row-start-2 row-end-3",
+              resolvedSlotProps?.className
+            ),
+          };
+        },
+      }}
     />
   );
 });
-
-export default C_NumberInput;
-
-const blue = {
-  100: "#DAECFF",
-  200: "#80BFFF",
-  400: "#3399FF",
-  500: "#007FFF",
-  600: "#0072E5",
-};
-
-const grey = {
-  50: "#F3F6F9",
-  100: "#E7EBF0",
-  200: "#E0E3E7",
-  300: "#CDD2D7",
-  400: "#B2BAC2",
-  500: "#A0AAB4",
-  600: "#6F7E8C",
-  700: "#3E5060",
-  800: "#2D3843",
-  900: "#1A2027",
-};
-
-const StyledInputRoot = styled("div")(
-  ({ theme }) => `
-    font-weight: 400;
-    border-radius: 8px;
-    color: red;
-    background: var(--background-200);
-    border: 1px solid var(--bs-gray-alpha-400);
-    box-shadow: 0px 2px 2px rgb(0 0 0 / 0.05);;
-    display: grid;
-    grid-template-columns: 1fr 19px;
-    grid-template-rows: 1fr 1fr;
-    overflow: hidden;
-  
-  
-    &.${numberInputClasses.focused} {
-      border-color: ${blue[400]};
-      box-shadow: 0 0 0 3px ${blue[200]};
-    }
-  
-    &:hover {
-      border-color: ${blue[400]};
-    }
-  
-    // firefox
-    &:focus-visible {
-      outline: 0;
-    }
-  `
-);
-
-const StyledInputElement = styled("input")(
-  ({ theme }) => `
-    font-size: 0.875rem;
-    font-family: inherit;
-    font-weight: 400;
-    line-height: 1.5;
-    grid-column: 1/2;
-    grid-row: 1/3;
-    color: var(--bs-gray-1000);
-    background: inherit;
-    border: none;
-    border-radius: inherit;
-    padding: 8px 12px;
-    outline: 0;
-  `
-);
-
-const StyledButton = styled("button")(
-  ({ theme }) => `
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: center;
-    align-items: center;
-    appearance: none;
-    padding: 0;
-    width: 19px;
-    height: 19px;
-    font-family: system-ui, sans-serif;
-    font-size: 0.875rem;
-    box-sizing: border-box;
-    line-height: 1.2;
-    background: var(--background-200);
-    border: 0;
-    color: ${grey[900]};
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 120ms;
-  
-    &:hover {
-      background: ${grey[50]};
-      border-color: ${grey[300]};
-      cursor: pointer;
-    }
-  
-    &.${numberInputClasses.incrementButton} {
-      grid-column: 2/3;
-      grid-row: 1/2;
-    }
-  
-    &.${numberInputClasses.decrementButton} {
-      grid-column: 2/3;
-      grid-row: 2/3;
-    }
-  `
-);
